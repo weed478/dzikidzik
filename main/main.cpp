@@ -60,7 +60,7 @@ extern "C" void app_main(void) {
       return;
     }
     int64_t fps = 1000000 / latency;
-    ESP_LOGI(TAG, "Latency: %d ms, FPS: %d", latency / 1000, fps);
+    ESP_LOGI(TAG, "Latency: %lld ms, FPS: %lld", latency / 1000, fps);
     vTaskDelay(pdMS_TO_TICKS(500));
   }
 }
