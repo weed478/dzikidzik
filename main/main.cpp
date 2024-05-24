@@ -28,11 +28,15 @@ extern "C" void app_main(void) {
   }
 
   // Pull in only the operation implementations we need.
-  tflite::MicroMutableOpResolver<1> resolver;
-  if (resolver.AddFullyConnected() != kTfLiteOk) {
-    ESP_LOGE(TAG, "Failed to add FULLY CONNECTED op.");
-    return;
-  }
+  tflite::MicroMutableOpResolver<8> resolver;
+  resolver.AddQuantize();
+  resolver.AddConv2D();
+  resolver.AddRelu();
+  resolver.AddAdd();
+  resolver.AddDepthwiseConv2D();
+  resolver.AddMean();
+  resolver.AddReshape();
+  resolver.AddSoftmax();
 
   // Build an interpreter to run the model with.
   tflite::MicroInterpreter interpreter(
