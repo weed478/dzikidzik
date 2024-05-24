@@ -1,6 +1,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
@@ -10,9 +11,6 @@
 #include "model.h"
 
 static const char TAG[] = "main";
-
-static constexpr float kXrange = 2.f * 3.14159265359f;
-static constexpr int kInferencesPerCycle = 20;
 
 static constexpr int kTensorArenaSize = 2000;
 static uint8_t tensor_arena[kTensorArenaSize];
@@ -54,11 +52,15 @@ extern "C" void app_main(void) {
 
   for (;;)
   {
+    int64_t start_us = esp_timer_get_time();
     TfLiteStatus invoke_status = interpreter.Invoke();
+    int64_t latency = esp_timer_get_time() - start_us;
     if (invoke_status != kTfLiteOk) {
       ESP_LOGE(TAG, "Invoke failed");
       return;
     }
+    int64_t fps = 1000000 / latency;
+    ESP_LOGI(TAG, "Latency: %d ms, FPS: %d", latency / 1000, fps);
     vTaskDelay(pdMS_TO_TICKS(500));
   }
 }
