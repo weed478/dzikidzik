@@ -30,14 +30,14 @@ extern "C" void app_main(void)
 
     // Pull in only the operation implementations we need.
     tflite::MicroMutableOpResolver<8> resolver;
-    resolver.AddQuantize();
     resolver.AddConv2D();
-    resolver.AddRelu();
-    resolver.AddAdd();
+    resolver.AddRelu6();
     resolver.AddDepthwiseConv2D();
+    resolver.AddPad();
+    resolver.AddAdd();
     resolver.AddMean();
-    resolver.AddReshape();
-    resolver.AddSoftmax();
+    resolver.AddFullyConnected();
+    resolver.AddLogistic();
 
     // Build an interpreter to run the model with.
     tflite::MicroInterpreter interpreter(
