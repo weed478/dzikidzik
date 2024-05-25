@@ -51,6 +51,8 @@ extern "C" void app_main(void)
         return;
     }
 
+    ESP_LOGI(TAG, "Used arena: %d bytes", interpreter.arena_used_bytes());
+
     TfLiteTensor *input = interpreter.input(0);
     TfLiteTensor *output = interpreter.output(0);
 
