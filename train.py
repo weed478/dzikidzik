@@ -77,7 +77,7 @@ def export(model):
 
     def representative_dataset():
         for _ in range(100):
-            data = np.random.rand(1, 224, 224, 3)
+            data = np.random.rand(1, 224, 224, 3) * 2 - 1
             yield [data.astype(np.float32)]
 
     converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
