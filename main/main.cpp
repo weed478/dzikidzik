@@ -12,7 +12,7 @@
 
 static const char TAG[] = "main";
 
-static constexpr int kTensorArenaSize = 6000000;
+static constexpr int kTensorArenaSize = 2097152;
 EXT_RAM_BSS_ATTR static uint8_t tensor_arena[kTensorArenaSize];
 
 extern "C" void app_main(void)
