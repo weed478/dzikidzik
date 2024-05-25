@@ -3,3 +3,8 @@ sdkconfig.old
 .vscode/
 .devcontainer/
 managed_components/
+coco/
+*.keras
+*.ipynb
+*.tflite
+*saved_model/
