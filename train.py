@@ -1,58 +1,6 @@
 import keras
 import tensorflow as tf
 import numpy as np
-from torchvision.datasets import CocoDetection
-from tqdm import tqdm
-
-
-DOG = 18
-
-
-def has_dog(annotations):
-    for annotation in annotations:
-        if annotation['category_id'] == DOG:
-            return True
-    return False
-
-
-def preprocess_image(image):
-    return np.array(image.resize((224, 224))).astype(np.float32) / 127.5 - 1
-
-
-def shuffle_pair(images, labels):
-    indices = np.random.permutation(len(images))
-    return images[indices], labels[indices]
-
-
-def get_dataset(dataset):
-    dogs = []
-    not_dogs = []
-    for image, annotations in tqdm(dataset):
-        image = preprocess_image(image)
-        if has_dog(annotations):
-            dogs.append(image)
-        else:
-            not_dogs.append(image)
-    images = np.array(dogs + not_dogs)
-    np.random.shuffle(images)
-
-    test_size = len(dogs) // 5
-    test_dogs = dogs[:test_size // 2]
-    test_not_dogs = not_dogs[:test_size // 2]
-    test_images = np.array(test_dogs + test_not_dogs)
-    test_labels = np.array([1] * len(test_dogs) + [0] * len(test_not_dogs))
-    test_images, test_labels = shuffle_pair(test_images, test_labels)
-
-    train_dogs = dogs[test_size // 2:]
-    train_not_dogs = not_dogs[test_size // 2:len(dogs)]
-    train_images = np.array(train_dogs + train_not_dogs)
-    train_labels = np.array([1] * len(train_dogs) + [0] * len(train_not_dogs))
-    train_images, train_labels = shuffle_pair(train_images, train_labels)
-
-    return (
-        tf.data.Dataset.from_tensor_slices((train_images, train_labels)),
-        tf.data.Dataset.from_tensor_slices((test_images, test_labels)),
-    )
 
 
 def build_model():
@@ -61,7 +9,7 @@ def build_model():
         include_top=False,
         pooling='avg',
         weights='imagenet',
-        alpha=0.5,
+        alpha=0.35,
     )
     model = keras.Sequential([
         keras.Input(shape=(224, 224, 3)),
@@ -93,21 +41,33 @@ def export(model):
 
 
 def main():
-    dataset = CocoDetection(root='coco/val2017', annFile='coco/annotations/instances_val2017.json')
-    train_dataset, test_dataset = get_dataset(dataset)
+    train_images = np.load('coco/train_images.npy')
+    train_labels = np.load('coco/train_labels.npy')
+    test_images = np.load('coco/test_images.npy')
+    test_labels = np.load('coco/test_labels.npy')
 
     model = build_model()
 
+    epochs = 5
+    batch_size = 32
+
     model.compile(
-        optimizer=keras.optimizers.Adam(1e-4),
+        optimizer=keras.optimizers.Adam(
+            learning_rate=keras.optimizers.schedules.CosineDecay(
+                initial_learning_rate=1e-4,
+                decay_steps=epochs * len(train_images) // batch_size,
+            ),
+            clipnorm=1.0,
+        ),
         loss=keras.losses.BinaryCrossentropy(),
         metrics=[keras.metrics.BinaryAccuracy(), keras.metrics.AUC()],
     )
 
     model.fit(
-        train_dataset.batch(32).prefetch(tf.data.AUTOTUNE),
-        epochs=10,
-        validation_data=test_dataset.batch(32).prefetch(tf.data.AUTOTUNE),
+        train_images, train_labels,
+        batch_size=batch_size,
+        epochs=epochs,
+        validation_data=(test_images, test_labels),
     )
 
     model.save('doggy.keras')
