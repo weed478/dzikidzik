@@ -50,7 +50,7 @@ static camera_config_t camera_config = {
     .ledc_channel = LEDC_CHANNEL_0,
 
     .pixel_format = PIXFORMAT_RGB565,//YUV422,GRAYSCALE,RGB565,JPEG
-    .frame_size = FRAMESIZE_96X96,//QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
+    .frame_size = FRAMESIZE_240X240,//QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
 
     .jpeg_quality = 12, //0-63, for OV series camera sensors, lower number means higher quality
     .fb_count = 1, //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
@@ -73,7 +73,7 @@ esp_err_t mycamera_grab(unsigned char *image, int height, int width)
 
     ESP_LOGI(TAG, "Picture taken! It's size was: %zu bytes", pic->len);
 
-    if (pic->width != width || pic->height != height) 
+    if (pic->width < width || pic->height < height) 
     {
         ESP_LOGE(TAG, "Picture size is not correct! Expected: %dx%d, got: %dx%d", width, height, pic->width, pic->height);
         esp_camera_fb_return(pic);
@@ -84,21 +84,26 @@ esp_err_t mycamera_grab(unsigned char *image, int height, int width)
 
     unsigned char *pixel888 = &image[0];
 
-    for (int idx = 0; idx < pic->width * pic->height; idx += 2) 
+    for (int y = 0; y < height; y++)
     {
-        uint16_t pixel565 = (pic->buf[idx] << 8) | pic->buf[idx + 1];
+        for (int x = 0; x < width; x++)    
+        {
+            int idx = (y * pic->width + x) * 2;
 
-        // R
-        *pixel888 = ((pixel565 >> 11) * 527 + 23) >> 6;
-        pixel888 += 1;
+            uint16_t pixel565 = (pic->buf[idx] << 8) | pic->buf[idx + 1];
 
-        // G
-        *pixel888 = (((pixel565 >> 5) & 63) * 259 + 33) >> 6;
-        pixel888 += 1;
+            // R
+            *pixel888 = ((pixel565 >> 11) * 527 + 23) >> 6;
+            pixel888 += 1;
 
-        // B
-        *pixel888 = ((pixel565 & 31) * 527 + 23) >> 6;
-        pixel888 += 1;
+            // G
+            *pixel888 = (((pixel565 >> 5) & 63) * 259 + 33) >> 6;
+            pixel888 += 1;
+
+            // B
+            *pixel888 = ((pixel565 & 31) * 527 + 23) >> 6;
+            pixel888 += 1;
+        }
     }
 
     if (pixel888 != &image[height * width * 3]) 

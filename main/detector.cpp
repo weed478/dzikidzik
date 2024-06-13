@@ -66,6 +66,19 @@ void detector_init()
 
 int detector_detect(const unsigned char *image, int height, int width)
 {
+    if (input->dims->data[1] != height || input->dims->data[2] != width)
+    {
+        ESP_LOGE(TAG, "Input tensor shape mismatch: %d != %d or %d != %d",
+                    input->dims->data[1], height, input->dims->data[2], width);
+        return -1;
+    }
+
+    // Copy image data to input tensor
+    for (int i = 0; i < height * width * 3; i++)
+    {
+        input->data.int8[i] = (int8_t) (((int) image[i]) - 128);
+    }
+
     int64_t start_us = esp_timer_get_time();
     TfLiteStatus invoke_status = interpreter->Invoke();
     int64_t latency = esp_timer_get_time() - start_us;
@@ -76,5 +89,11 @@ int detector_detect(const unsigned char *image, int height, int width)
     }
     int64_t fps = 1000000 / latency;
     ESP_LOGI(TAG, "Latency: %lld ms, FPS: %lld", latency / 1000, fps);
+
+    // Get the output tensor
+    int prob = *output->data.int8;
+
+    ESP_LOGW(TAG, "Output: %d", prob);
+
     return 0;
 }

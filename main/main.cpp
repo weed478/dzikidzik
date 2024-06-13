@@ -7,8 +7,8 @@
 
 static const char TAG[] = "main";
 
-#define WIDTH 96
-#define HEIGHT 96
+#define WIDTH 224
+#define HEIGHT 224
 
 static unsigned char rgb888_buf[HEIGHT][WIDTH][3];
 
@@ -25,6 +25,6 @@ extern "C" void app_main(void)
         ESP_LOGI(TAG, "Detecting dogs on the picture...");
         detector_detect((const unsigned char*) rgb888_buf, HEIGHT, WIDTH);
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(1);
     }
 }
