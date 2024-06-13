@@ -64,7 +64,7 @@ void detector_init()
     output = interpreter->output(0);
 }
 
-int detector_detect(const unsigned char *image, int width, int height)
+int detector_detect(const unsigned char *image, int height, int width)
 {
     int64_t start_us = esp_timer_get_time();
     TfLiteStatus invoke_status = interpreter->Invoke();

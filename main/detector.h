@@ -3,6 +3,6 @@
 
 void detector_init();
 
-int detector_detect(const unsigned char *image, int width, int height);
+int detector_detect(const unsigned char *image, int height, int width);
 
 #endif
