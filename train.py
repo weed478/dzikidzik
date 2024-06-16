@@ -23,10 +23,12 @@ def export(model):
     saved_model_dir = 'doggy_saved_model'
     model.export(saved_model_dir)
 
+    test_images = np.load('coco/test_images.npy')
+
     def representative_dataset():
-        for _ in range(100):
-            data = np.random.rand(1, 224, 224, 3) * 2 - 1
-            yield [data.astype(np.float32)]
+        for i in range(len(test_images)):
+            data = test_images[i:i + 1]
+            yield [data]
 
     converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
